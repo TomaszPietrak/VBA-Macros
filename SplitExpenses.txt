@@ -1,0 +1,539 @@
+Attribute VB_Name = "SplitExpenses"
+Option Explicit
+Private ErrorOccurred As Boolean
+
+Public Sub FinalMacro()
+
+Application.ScreenUpdating = False
+
+    Call InitialSorting
+    
+    Call SeparateValues
+
+    Call CopyData
+    
+    Call DeleteTemporarySheets
+    
+    Call DeleteRowsWithEmptyColumnCellsAndRedundantCells
+    
+    Call EnterFormulasInCombinedReport
+    
+    Call CreatePivots
+    
+    Call GetNominatorAndDenominator
+    
+Application.ScreenUpdating = True
+
+End Sub
+
+Private Sub InitialSorting()
+'This sub deletes the first 3 rows and enters a filter for the remaining
+'first row. It then creates 4 empty rows, and removes the Enter spacing
+'in Column C (Expense Items on Expense Reports and replaces it with commas.
+' This allows it to text-to-colums the categories into separate columns.
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets(1)
+    ws.Name = "Data"
+    
+    With ws
+    
+        .Rows("1:3").Delete Shift:=xlUp
+        
+        .Range("D:L").EntireColumn.Insert Shift:=xlToRight, _
+                    CopyOrigin:=xlFormatFromLeftOrAbove
+        .Range("C:C").Replace What:="" & Chr(10) & "" & Chr(10) & "", _
+         Replacement:=",", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, _
+         SearchFormat:=False, ReplaceFormat:=False
+        
+        .Range("C:C").EntireColumn.TextToColumns Destination:=Range("C1"), _
+        DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, _
+        ConsecutiveDelimiter:=False, Tab:=True, Semicolon:=False, _
+        Comma:=True, Space:=False, Other:=False, FieldInfo _
+        :=Array(Array(1, 1), Array(2, 1)), TrailingMinusNumbers:=True
+        
+        .Rows("1:1").AutoFilter
+        
+        .Range("A:T").AutoFilter Field:=14, Criteria1:= _
+        "Approved"
+    
+    End With
+  
+
+
+End Sub
+
+Private Sub SeparateValues()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Set ws = ThisWorkbook.Worksheets("Data")
+
+    ws.Range("A:A,C:C,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "1st Category"
+        Set nws = ThisWorkbook.Worksheets("1st Category")
+    nws.Paste
+    
+    ws.Range("A:A,D:D,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "2nd Category"
+        Set nws = ThisWorkbook.Worksheets("2nd Category")
+    nws.Paste
+    
+    ws.Range("A:A,E:E,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "3rd Category"
+        Set nws = ThisWorkbook.Worksheets("3rd Category")
+    nws.Paste
+    
+    ws.Range("A:A,F:F,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "4th Category"
+        Set nws = ThisWorkbook.Worksheets("4th Category")
+    nws.Paste
+    
+    ws.Range("A:A,G:G,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "5th Category"
+        Set nws = ThisWorkbook.Worksheets("5th Category")
+    nws.Paste
+    
+    ws.Range("A:A,H:H,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "6th Category"
+        Set nws = ThisWorkbook.Worksheets("6th Category")
+    nws.Paste
+    
+    ws.Range("A:A,I:I,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "7th Category"
+        Set nws = ThisWorkbook.Worksheets("7th Category")
+    nws.Paste
+    
+    ws.Range("A:A,J:J,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "8th Category"
+        Set nws = ThisWorkbook.Worksheets("8th Category")
+    nws.Paste
+    
+    ws.Range("A:A,K:K,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "9th Category"
+        Set nws = ThisWorkbook.Worksheets("9th Category")
+    nws.Paste
+    
+    ws.Range("A:A,L:L,M:M,P:T").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "10th Category"
+        Set nws = ThisWorkbook.Worksheets("10th Category")
+    nws.Paste
+    
+    Application.DisplayAlerts = False
+    On Error Resume Next
+    ThisWorkbook.Worksheets("Combined Reports").Delete
+    Application.DisplayAlerts = True
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Combined Reports"
+        Set nws = ThisWorkbook.Worksheets("Combined Reports")
+            nws.Range("A1") = "Expense Report Number"
+            nws.Range("B1") = "Expense Items on Expense Report"
+            nws.Range("C1") = "Expense Report Creation Date"
+            nws.Range("D1") = "Step"
+            nws.Range("E1") = "Received in Inbox on"
+            nws.Range("F1") = "Action taken on"
+            nws.Range("G1") = "Action taken"
+            nws.Range("H1") = "Person taking action"
+  
+ End Sub
+ 
+Private Sub CopyData()
+    
+On Error GoTo ErrorHandler
+'    Dim wscount As Worksheet
+'    For Each wscount In ThisWorkbook.Worksheets
+'    wscount.Activate
+    
+    Dim WS_Count As Integer
+    Dim i As Integer
+    
+    WS_Count = ActiveWorkbook.Worksheets.Count
+    
+    For i = 2 To WS_Count - 1
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Worksheets(i).Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Combined Reports").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Combined Reports"), 1)
+    
+    Worksheets(i).Range("A1", "A" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       ' rngNewRange.Interior.Color = vbYellow
+    
+    Worksheets(i).Range("B1", "B" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("B" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("C1", "C" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("C" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("D1", "D" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("D" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+          
+    Worksheets(i).Range("E1", "E" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("E" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("F1", "F" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("F" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("G1", "G" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("G" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("H1", "H" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("H" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+    
+    Next
+ErrorHandler:
+ErrorOccurred = True
+
+End Sub
+
+
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+Private Sub DeleteTemporarySheets()
+
+    
+Dim ws As Worksheet
+Set ws = ThisWorkbook.Worksheets("Combined Reports")
+
+Dim index As Integer
+Dim WS2 As Worksheet
+Dim i As Integer
+index = ws.index
+
+
+ 
+ For i = index To 1 Step -1
+    Set WS2 = ThisWorkbook.Worksheets(index - 1)
+    Debug.Print WS2.Name
+    If WS2.Name = "Data" Or WS2.Name = "Combined Reports" Then
+        Else
+            Application.DisplayAlerts = False
+            WS2.Delete
+            Application.DisplayAlerts = True
+            index = index - 1
+    End If
+Next
+
+Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+
+End Sub
+
+
+Private Sub DeleteRowsWithEmptyColumnCellsAndRedundantCells()
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Combined Reports")
+    
+   ' ws.Range("A1:G1").Delete
+                    
+
+    Dim rng As Range
+    
+    ws.Range("A1:H1").Offset(1, 0).AutoFilter Field:=1, Criteria1:="Expense Report Number"
+        Set rng = ws.Range("A2:A" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    ws.ShowAllData
+    
+    
+    ws.Range("A1:H1").AutoFilter Field:=2, Criteria1:="="
+         Set rng = ws.Range("B2:B" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    ws.ShowAllData
+    
+
+    ws.Range("A1:G1").AutoFilter Field:=4, Criteria1:="Approval by Manager", Operator:=xlOr, Criteria2:="Expense Report Event"
+        Set rng = ws.Range("D2:D" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    ws.ShowAllData
+
+End Sub
+
+Private Sub DeleteAllCancelledExpenses()
+
+'
+'Dim ws As Worksheet
+'    Set ws = ThisWorkbook.Worksheets("Combined Reports")
+'
+'    Dim rng As Range
+'    Dim i As Long
+'
+'    Dim LastRow As Long
+'    LastRow = ws.Cells.Find(What:="*", _
+'                    After:=Range("A1"), _
+'                    LookAt:=xlPart, _
+'                    LookIn:=xlFormulas, _
+'                    SearchOrder:=xlByRows, _
+'                    SearchDirection:=xlPrevious, _
+'                    MatchCase:=False).Row
+'
+'    Set rng = ws.Range("F:F")
+'    With rng
+'        ' Loop through all cells of the range
+'        ' Loop backwards, hence the "Step -1"
+'        For i = LastRow To 1 Step -1
+'            If .Item(i) = "Canceled" Then
+'                ' Since cell is empty, delete the whole row
+'                .Item(i).EntireRow.Delete
+'            End If
+'        Next i
+'    End With
+'
+End Sub
+
+Private Sub EnterFormulasInCombinedReport()
+
+Dim ws As Worksheet
+Dim rng As Range
+Dim LastRow As Long
+
+    Set ws = ThisWorkbook.Worksheets("Combined Reports")
+    ws.Range("I1") = "Month Action Taken"
+    
+    LastRow = Sheets("Combined Reports").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Set rng = ws.Range("I2:I" & LastRow)
+    rng.Formula = "=IF(RC[-3]="""","""",TEXT(RC[-3],""mmm""))"
+    rng.Style = "Good"
+        
+End Sub
+
+Private Sub CreatePivots()
+
+'Declare Variables
+Dim PSheet As Worksheet
+Dim DSheet As Worksheet
+Dim PCache As PivotCache
+Dim PTable As PivotTable
+Dim PRange As Range
+Dim LastRow As Long
+Dim LastCol As Long
+
+'Insert a New Blank Worksheet
+Application.DisplayAlerts = False
+On Error Resume Next
+Worksheets("Pivot Tables").Delete
+Application.DisplayAlerts = True
+
+Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Pivot Tables"
+
+Set PSheet = ThisWorkbook.Worksheets("Pivot Tables")
+Set DSheet = ThisWorkbook.Worksheets("Combined Reports")
+
+'Define Data Range
+LastRow = DSheet.Cells(Rows.Count, 1).End(xlUp).Row
+LastCol = DSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+Set PRange = DSheet.Cells(1, 1).Resize(LastRow, LastCol)
+
+'Define Pivot Cache
+Set PCache = ThisWorkbook.PivotCaches.Create _
+(SourceType:=xlDatabase, SourceData:=PRange). _
+CreatePivotTable(TableDestination:=PSheet.Cells(2, 2), _
+TableName:="SendBackPivot")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 1), TableName:="SendBackPivot")
+
+'Insert Row Fields
+With PSheet.PivotTables("SendBackPivot").PivotFields("Expense Items on Expense Report")
+.Orientation = xlRowField
+.Position = 1
+End With
+
+'Insert Column Fields
+With PSheet.PivotTables("SendBackPivot").PivotFields("Month Action Taken")
+.Orientation = xlColumnField
+.Position = 1
+End With
+
+'Insert Filter Fields
+With PSheet.PivotTables("SendBackPivot").PivotFields("Action Taken")
+.Orientation = xlPageField
+.Position = 1
+End With
+
+'Insert Data Field
+With PSheet.PivotTables("SendBackPivot").PivotFields("Expense Report Number")
+.Orientation = xlDataField
+.Position = 1
+.Function = xlCount
+.Name = "Sent Back Expenses"
+End With
+
+'Filter to leave only needed items
+
+    With PSheet.PivotTables("SendBackPivot").PivotFields("Action taken")
+
+        .ClearAllFilters
+        .CurrentPage = "Sent Back"
+        .EnableMultiplePageItems = True
+    Dim pi As PivotItem
+    
+    For Each pi In .PivotItems
+        If pi.Name <> "SentBack" Then pi.Visible = False
+    Next pi
+
+End With
+
+'Find current month
+Dim months(12) As String
+months(1) = "jan"
+months(2) = "feb"
+months(3) = "mrt"
+months(4) = "apr"
+months(5) = "mei"
+months(6) = "jun"
+months(7) = "jul"
+months(8) = "aug"
+months(9) = "sep"
+months(10) = "okt"
+months(11) = "nov"
+months(12) = "dec"
+
+Dim nowMonth As Integer
+nowMonth = Month(Now) - 1
+
+'Filter Months to only this month
+
+With PSheet.PivotTables("SendBackPivot").PivotFields("Month Action Taken")
+        .ClearAllFilters
+        .CurrentPage = nowMonth
+        .EnableMultiplePageItems = True
+        
+    For Each pi In .PivotItems
+        If pi.Name <> months(nowMonth) Then pi.Visible = False
+    Next pi
+End With
+
+
+
+'Create Second Pivot Table with All values
+
+'Define Pivot Cache
+Set PCache = ThisWorkbook.PivotCaches.Create _
+(SourceType:=xlDatabase, SourceData:=PRange). _
+CreatePivotTable(TableDestination:=PSheet.Cells(2, 10), _
+TableName:="AllPivot")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 1), TableName:="AllPivot")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 10), TableName:="AllPivot")
+
+'Insert Row Fields
+With PSheet.PivotTables("AllPivot").PivotFields("Expense Items on Expense Report")
+.Orientation = xlRowField
+.Position = 1
+End With
+
+'Insert Column Fields
+With PSheet.PivotTables("AllPivot").PivotFields("Month Action Taken")
+.Orientation = xlColumnField
+.Position = 1
+End With
+
+'Insert Filter Fields
+With PSheet.PivotTables("AllPivot").PivotFields("Action Taken")
+.Orientation = xlPageField
+.Position = 1
+End With
+
+'Insert Data Field
+With PSheet.PivotTables("AllPivot").PivotFields("Expense Report Number")
+.Orientation = xlDataField
+.Position = 1
+.Function = xlCount
+.Name = "Sent Back Expenses"
+End With
+
+nowMonth = Month(Now) - 1
+
+'Filter Months to only this month
+
+With PSheet.PivotTables("AllPivot").PivotFields("Month Action Taken")
+        .ClearAllFilters
+        .CurrentPage = nowMonth
+        .EnableMultiplePageItems = True
+        
+    For Each pi In .PivotItems
+        If pi.Name <> months(nowMonth) Then pi.Visible = False
+    Next pi
+End With
+
+End Sub
+
+  
+Sub GetNominatorAndDenominator()
+
+
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+Range("F4") = "Sent Back Tickets"
+Range("F5") = "All Tickets"
+
+Set ws = ThisWorkbook.Worksheets("Pivot Tables")
+Set pt = ws.PivotTables("SendBackPivot")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).Copy
+
+Range("G4").PasteSpecial xlPasteValues
+
+ErrorHandler:
+    ErrorOccurred = True
+
+Set pt = ws.PivotTables("AllPivot")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).Copy
+
+    With ws
+        .Range("G5").PasteSpecial xlPasteValues
+        .Range("F6") = "Ratio of Sent Back Tickets to All"
+        .Range("G6") = Range("G4") / Range("G5")
+        .Range("F7") = "Percentage of Sent Back Tickets"
+        .Range("G6").Copy
+        .Paste Destination:=Sheets("Pivot Tables").Range("G7")
+        .Range("G7").NumberFormat = "0%"
+        .Columns("F:G").AutoFit
+    End With
+
+
+End Sub
+
+
+
+

@@ -1,0 +1,389 @@
+Attribute VB_Name = "NewHireMacro"
+Option Explicit
+
+Public Sub FinalE2EHireMacro()
+
+Application.ScreenUpdating = False
+
+Call FirstFilter
+
+Call SecondFilter
+
+Call CombineWorksheets
+
+Call InsertFormulas
+
+Call CreatePivots
+
+Call EnterFormulasInPivotTablesSheet
+
+Call DeleteSheets
+
+Application.ScreenUpdating = True
+
+End Sub
+
+Private Sub FirstFilter()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+
+'Re-name the first Worksheet to DATA
+Set ws = ThisWorkbook.Worksheets(1)
+ws.Name = "DATA"
+
+'Delete a worksheet called "Final DATA" if it exists
+On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Last Status").Delete
+    Application.DisplayAlerts = True
+       
+ Set ws = ThisWorkbook.Worksheets("DATA")
+ ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+
+'Insert formula to find the required month and then use messagebox to put in required month number (8'th month etc)
+    Set rng = ws.Range("H2:H" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.Formula = "=IF(RC[-2]="""","""",MONTH(RC[-2]))"
+    
+    Dim RequiredMonth As Integer
+    RequiredMonth = InputBox("Please enter the number of the required month. The number has to be between 1 and 12")
+
+'Insert filters in Column B and F
+    With ws
+        .Range("A1:H1").AutoFilter Field:=2, Criteria1:= _
+            "To Do: Change Bank Election from Expenses to Salary", _
+            Operator:=xlOr, _
+            Criteria2:="To Do: Maintain Payment Elections for Worker"
+            
+        .Range("A1:H2").AutoFilter Field:=8, Criteria1:=RequiredMonth
+    End With
+    
+  'Copy visible cells in the range A to H
+    Set rng = ws.Range("A1:G" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    
+'Add a new worksheet called "Final DATA" and paste the visible cells to that sheet.
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Last Status"
+    Set nws = ThisWorkbook.Worksheets("Last Status")
+    nws.Paste
+    nws.Columns("H").Delete
+    
+    ws.ShowAllData
+
+End Sub
+
+Private Sub SecondFilter()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+
+Set ws = ThisWorkbook.Worksheets("DATA")
+
+'Delete a worksheet called "Final" if it exists
+On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("First Status").Delete
+    Application.DisplayAlerts = True
+   
+ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+
+'Insert formula to find the if the person is already there in the Last Status worksheet.
+    Set rng = ws.Range("I2:I" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.Formula = "=IFERROR(INDEX('Last Status'!C[-8],MATCH(DATA!RC[-8],'Last Status'!C[-8],0)),"""")"
+ 
+
+'Filter on "Hire" process in Column B and filter out all blanks in Column I
+    With ws
+        .Range("A1:I1").AutoFilter Field:=2, Criteria1:="Hire"
+        .Range("A1:I2").AutoFilter Field:=9, Criteria1:="<>"
+'       .Range("A1:I2").AutoFilter Field:=9, Criteria1:="<>", Operator:=xlOr, Criteria2:="<>" & ""
+    End With
+
+'Copy visible cells in the range A to I
+    Set rng = ws.Range("A1:I" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    
+'Add a new worksheet called "Final DATA" and paste the visible cells to that sheet.
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "First Status"
+    Set nws = ThisWorkbook.Worksheets("First Status")
+    nws.Paste
+    nws.Columns("H:I").Delete
+    
+    ws.ShowAllData
+
+'Remove Duplicates in First Status.
+ Set rng = nws.Range("A1:G" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.Sort Key1:=Range("F1"), Order1:=xlDescending, Header:=xlYes
+    rng.Sort Key1:=Range("A1"), Order1:=xlAscending, Header:=xlYes
+    rng.RemoveDuplicates Columns:=1, Header:=xlYes
+    
+ End Sub
+
+Private Sub CombineWorksheets()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+    
+    Set ws = ThisWorkbook.Worksheets("First Status")
+    
+        On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Combined Statuses").Delete
+    Application.DisplayAlerts = True
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Combined Statuses"
+    Set nws = ThisWorkbook.Worksheets("Combined Statuses")
+
+'Copy the data from First Status into a new sheet called Combined Statuses.
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Activate
+    ws.Range("A1:G1").AutoFilter
+    Set rng = ws.Range("A1:G" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    nws.Paste
+        
+'Copy the data from Last Status into a new sheet called Combined Statuses, beneath existing data.
+    Set ws = ThisWorkbook.Worksheets("Last Status")
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Range("A1:G1").AutoFilter
+    Set rng = ws.Range("A2:G" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Combined Statuses").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Combined Statuses"), 1)
+
+    Worksheets("Combined Statuses").Paste Destination:=Sheets("Combined Statuses").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Statuses").Range(Sheets("Combined Statuses").Cells(LastOldDataRow + 1, 1), Sheets("Combined Statuses").Cells(LR(Sheets("Combined Statuses"), 1), 1))
+
+'Sort the data to ensure that the Hire process is first, then the last step, and by name.
+nws.Activate
+ Set rng = nws.Range("A1:G" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.Sort Key1:=Range("A1"), Order1:=xlAscending, Header:=xlYes
+    
+End Sub
+
+'This function is used to find the last row in a required Worksheet.
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+Private Sub InsertFormulas()
+
+Dim ws As Worksheet
+Dim rng As Range
+    Set ws = ThisWorkbook.Worksheets("Combined Statuses")
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+        Set rng = ws.Range("A1:G" & Range("A" & Rows.Count).End(xlUp).Row)
+ 
+Dim LastRow As Long
+    ws.Range("V2") = "Start Time"
+    ws.Range("V3") = "End Time"
+    ws.Range("W2") = "8:30"
+    ws.Range("W2").NumberFormat = "h:mm AM/PM"
+    ws.Range("W3") = "17:30"
+    ws.Range("W3").NumberFormat = "h:mm AM/PM"
+    ws.Range("V2:Z3").Style = "Input"
+    
+    
+'    Set ws = ThisWorkbook.Worksheets("Total After Sort")
+        ws.Range("H1") = "Original Time Difference"
+    
+    LastRow = Sheets("Combined Statuses").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Set rng = ws.Range("H2:H" & LastRow)
+        rng.Formula = "=IF(RC[-7]=R[-1]C[-7],RC[-3]-R[-1]C[-2],"""")"
+
+    ws.Range("I1") = "Original Time Difference (In D/H/M/S)"
+    Set rng = ws.Range("I2:I" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+        
+    ws.Range("J1") = "Original Time Difference (Working Days)"
+    Set rng = ws.Range("J2:J" & LastRow)
+    rng.Formula = "=IF(RC[-9]=R[-1]C[-9],(NETWORKDAYS(R[-1]C[-5],RC[-4])-1)*(R3C23-R2C23) + MOD(RC[-4],1)-MOD(R[-1]C[-5],1),"""")"
+
+    ws.Range("K1") = "Original Time Difference (Working Days) (In D/H/M/S)"
+    Set rng = ws.Range("K2:K" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+    
+    ws.Range("L1") = "Original Weighted Time Difference in 24 Hour Day"
+    Set rng = ws.Range("L2:L" & LastRow)
+        rng.Formula = "=IF(RC[-2]="""","""",RC[-2]*24)"
+    
+    ws.Range("M1") = "Original Weighted Time Difference for 9 Hour Day"
+    Set rng = ws.Range("M2:M" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-1]/9)"
+    
+    ws.Range("N1") = "Weighted Time Difference (Working Days)"
+    Set rng = ws.Range("N2:N" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+    
+ 'Insert a formula that returns the first value before a comma, due to Text-To-Columns acting up like a spoiled little baby!!! (>.<)
+ 
+    ws.Range("O1") = "Pasted As Value (Days)"
+    Set rng = ws.Range("O2:O" & LastRow)
+    rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-2],"","",REPT("" "",LEN(RC[-2]))),(1-1)*LEN(RC[-2])+1,LEN(RC[-2])))"
+    
+'Insert a formula that returns the second value after a comma, due to Text-To-Columns acting up like a spoiled little baby!!! (>.<) #Hate on Text-To-Columns
+    ws.Range("P1") = "Pasted As Value (Hours)"
+    Set rng = ws.Range("P2:P" & LastRow)
+        rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-3],"","",REPT("" "",LEN(RC[-3]))),(2-1)*LEN(RC[-3])+1,LEN(RC[-3])))"
+    
+    ws.Range("Q1") = "Funny Calc1"
+    Set rng = ws.Range("Q2:Q" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",0 & "","" & RC[-1])"
+
+            
+    ws.Range("R1") = "Funny Calc2"
+    Set rng = ws.Range("R2:R" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-1]*9)"
+        
+    ws.Range("S1") = "Funny Calc3"
+    Set rng = ws.Range("S2:S" & LastRow)
+        rng.Formula = "=LEFT(RC[-1],1)"
+            Columns("S:S").NumberFormat = "0.00"
+   
+    ws.Range("T1") = "Final Working Days Duration"
+    Set rng = ws.Range("T2:T" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-5] & "" Days "" & RC[-1] & "" Hours"")"
+
+    ws.Range("H1:T" & Range("A" & Rows.Count).End(xlUp).Row).Style = "Good"
+    ws.Range("H1:T1").Font.Bold = True
+
+Dim nws As Worksheet
+
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Pivot Data").Delete
+    Application.DisplayAlerts = True
+    
+'    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Pivot Data"
+'    Set nws = ThisWorkbook.Worksheets("Pivot Data")
+'    ws.Activate
+'    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+'    ws.Range("A1:T1").AutoFilter
+'    Set rng = ws.Range("A1:T" & Range("A" & Rows.Count).End(xlUp).Row)
+'    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+'    nws.Range("A1").PasteSpecial xlPasteValues
+'    Application.CutCopyMode = False
+    
+End Sub
+
+Private Sub CreatePivots()
+
+'Declare Variables
+Dim PSheet As Worksheet
+Dim DSheet As Worksheet
+Dim PCache As PivotCache
+Dim PTable As PivotTable
+Dim PRange As Range
+Dim LastRow As Long
+Dim LastCol As Long
+
+'Insert a New Blank Worksheet
+Application.DisplayAlerts = False
+On Error Resume Next
+Worksheets("Pivot Tables").Delete
+Application.DisplayAlerts = True
+
+Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Pivot Tables"
+
+Set PSheet = ThisWorkbook.Worksheets("Pivot Tables")
+Set DSheet = ThisWorkbook.Worksheets("Combined Statuses")
+
+'Define Data Range
+LastRow = DSheet.Cells(Rows.Count, 1).End(xlUp).Row
+LastCol = DSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+Set PRange = DSheet.Cells(1, 1).Resize(LastRow, LastCol)
+
+'Define Pivot Cache
+Set PCache = ThisWorkbook.PivotCaches.Create _
+(SourceType:=xlDatabase, SourceData:=PRange). _
+CreatePivotTable(TableDestination:=PSheet.Cells(2, 2), _
+TableName:="E2EPivot")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 1), TableName:="E2EPivot")
+
+''Insert Row Fields
+'With PSheet.PivotTables("E2EPivot").PivotFields("Expense Items on Expense Report")
+'.Orientation = xlRowField
+'.Position = 1
+'End With
+
+'Insert Data Field
+With PSheet.PivotTables("E2EPivot").PivotFields("Original Weighted Time Difference for 9 Hour Day")
+.Orientation = xlDataField
+.Position = 1
+.Function = xlAverage
+.Name = "Average Time Difference"
+End With
+
+End Sub
+
+Private Sub EnterFormulasInPivotTablesSheet()
+
+Dim ws As Worksheet
+Dim rng As Range
+Dim LastRow As Long
+
+    Set ws = ThisWorkbook.Worksheets("Pivot Tables")
+    LastRow = Sheets("Pivot Tables").Cells(Rows.Count, "B").End(xlUp).Row
+    
+'Enter formulas next to pivot table to get us the Working duration.
+    ws.Range("C2") = "Total Days"
+        Set rng = ws.Range("C3:C" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-1],"","",REPT("" "",LEN(RC[-1]))),(1-1)*LEN(RC[-1])+1,LEN(RC[-1])))"
+    
+    ws.Range("D2") = "Provisional Total Hours"
+        Set rng = ws.Range("D3:D" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-2],"","",REPT("" "",LEN(RC[-2]))),(2-1)*LEN(RC[-2])+1,LEN(RC[-2])))"
+            
+    ws.Range("E2") = "Funny Calc 1"
+        Set rng = ws.Range("E3:E" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",0 & "","" & RC[-1])"
+        
+    ws.Range("F2") = "Funny Calc 2"
+        Set rng = ws.Range("F3:F" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-1]*9)"
+    
+    ws.Range("G2") = "Total Hours"
+        Set rng = ws.Range("G3:G" & LastRow)
+            rng.Formula = "=LEFT(RC[-1],1)"
+            
+    ws.Range("H2") = "Actual Total Duration"
+        Set rng = ws.Range("H3:H" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-5] & "" Days "" & RC[-1] & "" Hours"")"
+
+'Insert Cell Formatting
+    Set rng = ws.Range("C2:H2")
+    rng.Style = "Input"
+    Set rng = ws.Range("C3:H" & LastRow)
+    rng.Style = "Good"
+    
+        
+End Sub
+
+Private Sub DeleteSheets()
+
+Application.DisplayAlerts = False
+On Error Resume Next
+ThisWorkbook.Worksheets("Last Status").Delete
+ThisWorkbook.Worksheets("First Status").Delete
+Application.DisplayAlerts = True
+
+End Sub

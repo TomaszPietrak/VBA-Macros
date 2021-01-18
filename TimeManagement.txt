@@ -1,0 +1,154 @@
+Attribute VB_Name = "TimeManagement"
+Option Explicit
+
+Private Sub ClearPivotFilterCaches()
+
+    Dim pt As PivotTable
+    Dim ws As Worksheet
+    Dim pc As PivotCache
+    Application.ScreenUpdating = False
+    
+    For Each ws In ThisWorkbook.Worksheets
+        For Each pt In ws.PivotTables
+            pt.PivotCache.MissingItemsLimit = xlMissingItemsNone
+        Next pt
+    Next ws
+    
+    For Each pc In ThisWorkbook.PivotCaches
+        On Error Resume Next
+        pc.Refresh
+    Next pc
+    Application.ScreenUpdating = True
+    
+End Sub
+
+Private Sub ChangeDateFiltersYesterdayPivot()
+
+Dim Tod As String, Yest As String
+Dim ws As Worksheet
+Dim pt As PivotTable
+Dim i As Long
+Dim pi As PivotItem
+Dim xDay As Integer
+
+Application.ScreenUpdating = False
+    
+Set ws = ThisWorkbook.Worksheets("SLA First Reply 1day")
+Set pt = ws.PivotTables("YesterdayPivot")
+xDay = Weekday(Now)
+    If xDay = 2 Then
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-3"
+    Else
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-1"
+    End If
+'Clear Solved Filter in Pivot table
+    'Set Value for Today's date
+    Tod = Worksheets("SLA First Reply 1day").[W25]
+    'Set Value for Yesterday's date
+    Yest = Worksheets("SLA First Reply 1day").[W28]
+    
+       pt.PivotFields("Monthday").ClearAllFilters
+            
+      For Each pi In pt.PivotFields("Monthday").PivotItems
+      If pi.Name = Tod Then
+      pi.Visible = False
+        ElseIf pi.Name = Yest Then
+              pi.Visible = True
+        Else
+              pi.Visible = False
+      End If
+      Next pi
+      
+Application.ScreenUpdating = True
+        
+        End Sub
+        
+        
+Private Sub ChangeDateFiltersTodayPivot()
+
+Dim Tod As String, Yest As String
+Dim ws As Worksheet
+Dim pt As PivotTable
+Dim i As Long
+Dim pi As PivotItem
+Dim xDay As Integer
+
+Application.ScreenUpdating = False
+    
+Set ws = ThisWorkbook.Worksheets("SLA First Reply 1day")
+Set pt = ws.PivotTables("TodayPivot")
+xDay = Weekday(Now)
+    If xDay = 2 Then
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-3"
+    Else
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-1"
+    End If
+'Clear Solved Filter in Pivot table
+    'Set Value for Today's date
+    Tod = Worksheets("SLA First Reply 1day").[W25]
+    'Set Value for Yesterday's date
+    Yest = Worksheets("SLA First Reply 1day").[W28]
+    
+       pt.PivotFields("Monthday").ClearAllFilters
+            
+      For Each pi In pt.PivotFields("Monthday").PivotItems
+      If pi.Name = Tod Then
+      pi.Visible = True
+        Else
+              pi.Visible = False
+      End If
+      Next pi
+      
+Application.ScreenUpdating = True
+        
+        End Sub
+        
+Private Sub ChangeDateFilters48h()
+
+Dim Tod As String, Yest As String
+Dim ws As Worksheet
+Dim pt As PivotTable
+Dim i As Long
+Dim pi As PivotItem
+Dim xDay As Integer
+
+Application.ScreenUpdating = False
+    
+Set ws = ThisWorkbook.Worksheets("Email 48 h not closed")
+Set pt = ws.PivotTables("48h_Pivot")
+xDay = Weekday(Now)
+    If xDay = 2 Then
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-3"
+    Else
+        ThisWorkbook.Worksheets("SLA First Reply 1day").[V28].Formula = "=TODAY()-1"
+    End If
+'Clear Solved Filter in Pivot table
+    'Set Value for Today's date
+    Tod = Worksheets("SLA First Reply 1day").[W25]
+    'Set Value for Yesterday's date
+    Yest = Worksheets("SLA First Reply 1day").[W28]
+    
+       pt.PivotFields("day and month").ClearAllFilters
+            
+      For Each pi In pt.PivotFields("day and month").PivotItems
+      If pi.Name = Tod Then
+      pi.Visible = True
+        ElseIf pi.Name = Yest Then
+              pi.Visible = True
+        Else
+              pi.Visible = False
+      End If
+      Next pi
+Application.ScreenUpdating = True
+        
+        End Sub
+             
+Public Sub BeTheLordOfTime()
+
+    Call ChangeDateFiltersYesterdayPivot
+    
+    Call ChangeDateFiltersTodayPivot
+    
+    Call ChangeDateFilters48h
+
+End Sub

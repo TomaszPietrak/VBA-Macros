@@ -1,0 +1,218 @@
+Attribute VB_Name = "C4"
+Option Explicit
+
+Private ErrorOccurred As Boolean
+
+
+
+'C4 Feedback MACROS START HERE
+
+Private Sub RemoveFillC4Table()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("C4 Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub C4DrillDown()
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+
+Set ws = ThisWorkbook.Worksheets("C4 Tickets")
+Set pt = ws.PivotTables("C4_Pivot")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+ErrorHandler:
+    ErrorOccurred = True
+
+    End Sub
+    
+    
+ Private Sub C4CopyPasteData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("C4 Tickets")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+
+'    If WS2.Name = "F2 PAY Feedback" Then
+'        GoTo ErrorHandler
+'    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("C4 Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("C4 Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("C4 Feedback").Paste Destination:=Sheets("C4 Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("C4 Feedback").Range(Sheets("C4 Feedback").Cells(LastOldDataRow + 1, 1), Sheets("C4 Feedback").Cells(LR(Sheets("C4 Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Sub C4DeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("C4 Tickets")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+'    If WS2.Name = "C4 Feedback" Then
+'        GoTo ErrorHandler
+'    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+    
+
+Public Sub Sensitive_Data_C4_Final_Macro()
+    
+    Call RemoveFillC4Table
+    
+    Call C4DrillDown
+    
+    Call C4CopyPasteData
+    
+    Call C4DeletePageMacro
+    
+    End Sub
+
+
+Public Sub ChangeFilters()
+
+Dim Tod As String, Yest As String
+Dim ws As Worksheet
+Dim pt As PivotTable
+Dim i As Long
+Dim pi As PivotItem
+
+    'Set Value for Today's date
+    Tod = Worksheets("Raw Data").[BF2]
+    'Set Value for Yesterday's date
+    Yest = Worksheets("Raw Data").[BF5]
+    
+Set ws = ThisWorkbook.Worksheets("C4 Tickets")
+Set pt = ws.PivotTables("C4_Pivot")
+
+'Clear Solved Filter in Pivot table
+
+        pt.PivotFields("Solved").ClearAllFilters
+
+'        ws.PivotTables("C4_Pivot").PivotCache.SourceData = Worksheets("Fullness").Range("A1").CurrentRegion.Address(, , xlR1C1, True)
+'        Worksheets("Report").PivotTables("PivotTable3").PivotCache.SourceData = Worksheets("Backed").Range("A1").CurrentRegion.Address(, , xlR1C1, True)
+'        Worksheets("Report").PivotTables("PivotTable4").PivotCache.SourceData = Worksheets("Hoist").Range("A1").CurrentRegion.Address(, , xlR1C1, True)
+
+'    With pt.PivotFields("Solved")
+'            .ClearAllFilters
+'            .EnableMultiplePageItems = True
+'            .PivotItems(1).Visible = True
+'                For i = 2 To .PivotItems.Count
+'                pt.PivotItems(i).Visible = False
+'                Next
+'    End With
+            
+      For Each pi In pt.PivotFields("Solved").PivotItems
+      If pi.Name = Tod Then
+      pi.Visible = True
+        ElseIf pi.Name = Yest Then
+              pi.Visible = True
+        Else
+              pi.Visible = False
+      End If
+      Next pi
+      
+     
+      
+'            pt.PivotFields("Solved").CurrentPage = Tod
+'            pt.PivotFields("Solved").CurrentPage = Yest
+'            pt.PivotFields("Shift").CurrentPage = shift
+        
+        End Sub
+Public Sub ChangeFiltersLASTBUSINESSDAY()
+
+Dim Tod As String, Yest As String
+Dim ws As Worksheet
+Dim pt As PivotTable
+Dim i As Long
+Dim pi As PivotItem
+Dim xDay As Integer
+
+
+    
+Set ws = ThisWorkbook.Worksheets("C4 Tickets")
+Set pt = ws.PivotTables("C4_Pivot")
+xDay = Weekday(Now)
+    If xDay = 2 Then
+        ThisWorkbook.Worksheets("Raw Data").[BE5].Formula = "=TODAY()-3"
+    Else
+        ThisWorkbook.Worksheets("Raw Data").[BE5].Formula = "=TODAY()-1"
+    End If
+'Clear Solved Filter in Pivot table
+    'Set Value for Today's date
+    Tod = Worksheets("Raw Data").[BF2]
+    'Set Value for Yesterday's date
+    Yest = Worksheets("Raw Data").[BF5]
+    
+        pt.PivotFields("Solved").ClearAllFilters
+            
+      For Each pi In pt.PivotFields("Solved").PivotItems
+      If pi.Name = Tod Then
+      pi.Visible = True
+        ElseIf pi.Name = Yest Then
+              pi.Visible = True
+        Else
+              pi.Visible = False
+      End If
+      Next pi
+      
+        
+        End Sub

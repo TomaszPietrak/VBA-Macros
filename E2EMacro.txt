@@ -1,0 +1,864 @@
+Attribute VB_Name = "E2EMacro"
+Option Explicit
+Private ErrorOccurred As Boolean
+
+
+Public Sub FinalMacro()
+
+Application.ScreenUpdating = False
+
+    Call FirstFilter
+    
+    Call SecondFilter
+    
+    Call CombineWorksheets
+    
+    Call SortTotalDataAndAddFormulas
+
+    Call InitialSorting
+    
+    Call SeparateValues
+
+    Call CopyData
+    
+    Call DeleteTemporarySheets
+    
+    Call DeleteRowsWithEmptyColumnCellsAndRedundantCells
+    
+    Call CreatePivots
+    
+    Call EnterFormulasInPivotTablesSheet
+    
+    Call CreatePivotsWORKINGDAYS
+    
+    Call EnterFormulasInPivotTablesWORKINGDAYSSheet
+    
+    Call DeleteUselessness
+
+Application.ScreenUpdating = True
+
+End Sub
+
+Private Sub FirstFilter()
+Attribute FirstFilter.VB_ProcData.VB_Invoke_Func = " \n14"
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+Set ws = ThisWorkbook.Worksheets(1)
+ws.Name = "Sheet1"
+
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Total Before Sort").Delete
+    Application.DisplayAlerts = True
+    
+    With ws
+        .Rows("1:3").Delete Shift:=xlUp
+        .Range("A1:K1").AutoFilter Field:=5, Criteria1:= _
+            "Approved"
+        .Range("A1:K1").AutoFilter Field:=7, Criteria1:= _
+            "=Approval by Manager", Operator:=xlOr, Criteria2:="=Expense Report Event"
+    End With
+    
+    Set rng = ws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Total Before Sort"
+    Set nws = ThisWorkbook.Worksheets("Total Before Sort")
+    nws.Paste
+    
+    ws.ShowAllData
+    
+End Sub
+
+Private Sub SecondFilter()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+Set ws = ThisWorkbook.Worksheets("Total Before Sort")
+
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Step Completed").Delete
+    Application.DisplayAlerts = True
+    
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Approved").Delete
+    Application.DisplayAlerts = True
+    
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Range("A1:K1").AutoFilter Field:=10, Criteria1:="Step Completed"
+    Set rng = ws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Step Completed"
+    Set nws = ThisWorkbook.Worksheets("Step Completed")
+    nws.Paste
+    
+    Set rng = nws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.RemoveDuplicates Columns:=Array(1, 11), Header:=xlYes
+    
+    ws.ShowAllData
+    
+    'Continue here with copying of the 2nd filtered stuff, i.e. approved stuff
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    
+    ws.Range("A1:K1").AutoFilter Field:=10, Criteria1:="Approved"
+    Set rng = ws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Approved"
+    Set nws = ThisWorkbook.Worksheets("Approved")
+    nws.Paste
+    
+    Set rng = nws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.Sort Key1:=Range("I1"), Order1:=xlDescending, Header:=xlYes
+    rng.RemoveDuplicates Columns:=Array(1, 11), Header:=xlYes
+    rng.Sort Key1:=Range("I1"), Order1:=xlAscending, Header:=xlYes
+    
+    ws.ShowAllData
+    
+End Sub
+
+Private Sub CombineWorksheets()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Dim rng As Range
+    
+    Set ws = ThisWorkbook.Worksheets("Step Completed")
+    
+        On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Total After Sort").Delete
+    Application.DisplayAlerts = True
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Total After Sort"
+    Set nws = ThisWorkbook.Worksheets("Total After Sort")
+    
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Activate
+    ws.Range("A1:K1").AutoFilter
+    Set rng = ws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    nws.Paste
+        
+    Set ws = ThisWorkbook.Worksheets("Approved")
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Range("A1:K1").AutoFilter
+    Set rng = ws.Range("A2:K" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+
+  
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Total After Sort").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Total After Sort"), 1)
+    
+    'Worksheets(i).Range("A1", "A" & LastRow).Copy
+    Worksheets("Total After Sort").Paste Destination:=Sheets("Total After Sort").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Total After Sort").Range(Sheets("Total After Sort").Cells(LastOldDataRow + 1, 1), Sheets("Total After Sort").Cells(LR(Sheets("Total After Sort"), 1), 1))
+       ' rngNewRange.Interior.Color = vbYellow
+
+
+End Sub
+
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+Private Sub SortTotalDataAndAddFormulas()
+
+Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Total After Sort")
+
+Dim rng As Range
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+        Set rng = ws.Range("A1:K" & Range("A" & Rows.Count).End(xlUp).Row)
+            rng.Sort Key1:=ws.Range("A1"), Order1:=xlAscending, Header:=xlYes
+
+Dim LastRow As Long
+    ws.Range("Z2") = "Start Time"
+    ws.Range("Z3") = "End Time"
+    ws.Range("AA2") = "8:30"
+    ws.Range("AA2").NumberFormat = "h:mm AM/PM"
+    ws.Range("AA3") = "17:30"
+    ws.Range("AA3").NumberFormat = "h:mm AM/PM"
+    ws.Range("Z2:AA3").Style = "Input"
+    
+    
+'    Set ws = ThisWorkbook.Worksheets("Total After Sort")
+        ws.Range("L1") = "Original Time Difference"
+    
+    LastRow = Sheets("Total After Sort").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Set rng = ws.Range("L2:L" & LastRow)
+        rng.Formula = "=IF(RC[-11]=R[-1]C[-11],RC[-3]-R[-1]C[-3],"""")"
+
+    ws.Range("M1") = "Original Time Difference (In D/H/M/S)"
+    Set rng = ws.Range("M2:M" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+        
+    ws.Range("N1") = "Original Time Difference (Working Days)"
+    Set rng = ws.Range("N2:N" & LastRow)
+    rng.Formula = "=IF(RC[-13]=R[-1]C[-13],(NETWORKDAYS(R[-1]C[-6],RC[-5])-1)*(R3C27-R2C27) + MOD(RC[-5],1)-MOD(R[-1]C[-6],1),"""")"
+
+    ws.Range("O1") = "Original Time Difference (Working Days) (In D/H/M/S)"
+    Set rng = ws.Range("O2:O" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+    
+    ws.Range("P1") = "Original Weighted Time Difference in 24 Hour Day"
+    Set rng = ws.Range("P2:P" & LastRow)
+        rng.Formula = "=IF(RC[-2]="""","""",RC[-2]*24)"
+    
+    ws.Range("Q1") = "Original Weighted Time Difference for 9 Hour Day"
+    Set rng = ws.Range("Q2:Q" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-1]/9)"
+    
+    ws.Range("R1") = "Weighted Time Difference (Working Days)"
+    Set rng = ws.Range("R2:R" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+    
+ 'Insert a formula that returns the first value before a comma, due to Text-To-Columns acting up like a spoiled little baby!!! (>.<)
+ 
+    ws.Range("S1") = "Pasted As Value (Days)"
+    Set rng = ws.Range("S2:S" & LastRow)
+    rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-2],"","",REPT("" "",LEN(RC[-2]))),(1-1)*LEN(RC[-2])+1,LEN(RC[-2])))"
+    
+'Insert a formula that returns the second value after a comma, due to Text-To-Columns acting up like a spoiled little baby!!! (>.<) #Hate on Text-To-Columns
+    ws.Range("T1") = "Pasted As Value (Hours)"
+    Set rng = ws.Range("T2:T" & LastRow)
+        rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-3],"","",REPT("" "",LEN(RC[-3]))),(2-1)*LEN(RC[-3])+1,LEN(RC[-3])))"
+    
+    ws.Range("U1") = "Funny Calc1"
+    Set rng = ws.Range("U2:U" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",0 & "","" & RC[-1])"
+
+            
+    ws.Range("V1") = "Funny Calc2"
+    Set rng = ws.Range("V2:V" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-1]*9)"
+        
+    ws.Range("W1") = "Funny Calc3"
+    Set rng = ws.Range("W2:W" & LastRow)
+        rng.Formula = "=LEFT(RC[-1],1)"
+            Columns("W:W").NumberFormat = "0.00"
+   
+    ws.Range("X1") = "Final Working Days Duration"
+    Set rng = ws.Range("X2:X" & LastRow)
+        rng.Formula = "=IF(RC[-1]="""","""",RC[-5] & "" Days "" & RC[-1] & "" Hours"")"
+
+    ws.Range("L:X").Style = "Good"
+    ws.Range("L1:X1").Font.Bold = True
+
+Dim nws As Worksheet
+
+    On Error Resume Next
+    Application.DisplayAlerts = False
+    Worksheets("Data").Delete
+    Application.DisplayAlerts = True
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Data"
+    Set nws = ThisWorkbook.Worksheets("Data")
+    ws.Activate
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Range("A1:AA1").AutoFilter
+    Set rng = ws.Range("A1:AA" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Copy
+    nws.Range("A1").PasteSpecial xlPasteValues
+    Application.CutCopyMode = False
+    
+    
+End Sub
+
+
+
+Private Sub InitialSorting()
+'This sub enters a filter for the remaining first row. It then creates 4 empty rows,
+' and removes the Enter spacing in Column C (Expense Items on Expense Reports and replaces it
+' with commas. This allows it to text-to-colums the categories into separate columns.
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Data")
+    
+    ws.Activate
+    
+    With ws
+        
+        .Range("D:L").EntireColumn.Insert Shift:=xlToRight, _
+                    CopyOrigin:=xlFormatFromLeftOrAbove
+        .Range("C:C").Replace What:="" & Chr(10) & "" & Chr(10) & "", _
+         Replacement:=",", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, _
+         SearchFormat:=False, ReplaceFormat:=False
+        
+        .Range("C:C").EntireColumn.TextToColumns Destination:=Range("C1"), _
+        DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, _
+        ConsecutiveDelimiter:=False, Tab:=True, Semicolon:=False, _
+        Comma:=True, Space:=False, Other:=False, FieldInfo _
+        :=Array(Array(1, 1), Array(2, 1)), TrailingMinusNumbers:=True
+        
+        .Rows("1:1").AutoFilter
+    
+    End With
+  
+
+
+End Sub
+
+Private Sub SeparateValues()
+
+Dim ws As Worksheet
+Dim nws As Worksheet
+Set ws = ThisWorkbook.Worksheets("Data")
+
+    ws.Range("A:B,C:C,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "1st Category"
+        Set nws = ThisWorkbook.Worksheets("1st Category")
+    nws.Paste
+    
+    ws.Range("A:B,D:D,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "2nd Category"
+        Set nws = ThisWorkbook.Worksheets("2nd Category")
+    nws.Paste
+    
+    ws.Range("A:B,E:E,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "3rd Category"
+        Set nws = ThisWorkbook.Worksheets("3rd Category")
+    nws.Paste
+    
+    ws.Range("A:B,F:F,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "4th Category"
+        Set nws = ThisWorkbook.Worksheets("4th Category")
+    nws.Paste
+    
+    ws.Range("A:B,G:G,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "5th Category"
+        Set nws = ThisWorkbook.Worksheets("5th Category")
+    nws.Paste
+    
+    ws.Range("A:B,H:H,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "6th Category"
+        Set nws = ThisWorkbook.Worksheets("6th Category")
+    nws.Paste
+    
+    ws.Range("A:B,I:I,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "7th Category"
+        Set nws = ThisWorkbook.Worksheets("7th Category")
+    nws.Paste
+    
+    ws.Range("A:B,J:J,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "8th Category"
+        Set nws = ThisWorkbook.Worksheets("8th Category")
+    nws.Paste
+    
+    ws.Range("A:B,K:K,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "9th Category"
+        Set nws = ThisWorkbook.Worksheets("9th Category")
+    nws.Paste
+    
+    ws.Range("A:B,L:L,M:AG").Copy
+        Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "10th Category"
+        Set nws = ThisWorkbook.Worksheets("10th Category")
+    nws.Paste
+    
+    Application.DisplayAlerts = False
+    On Error Resume Next
+    ThisWorkbook.Worksheets("Combined Reports").Delete
+    Application.DisplayAlerts = True
+    
+    Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Combined Reports"
+        Set nws = ThisWorkbook.Worksheets("Combined Reports")
+            nws.Range("A1") = "Expense Report Number"
+            nws.Range("B1") = "Company"
+            nws.Range("C1") = "Expense Items on Expense Report"
+            nws.Range("D1") = "Expense Report Creation Date"
+            nws.Range("E1") = "Expense Report Status"
+            nws.Range("F1") = "Awaiting Persons"
+            nws.Range("G1") = "Step"
+            nws.Range("H1") = "Received in Inbox on"
+            nws.Range("I1") = "Action taken on"
+            nws.Range("J1") = "Action taken"
+            nws.Range("K1") = "Name of the Person who took action"
+            nws.Range("L1") = "Original Time Difference"
+            nws.Range("M1") = "Original Time Difference (In D/H/M/S)"
+            nws.Range("N1") = "Original Time Difference (Working Days)"
+            nws.Range("O1") = "Original Time Difference (Working Days) (In D/H/M/S)"
+            nws.Range("P1") = "Original Weighted Time Difference in 24 Hour Day"
+            nws.Range("Q1") = "Original Weighted Time Difference for 9 Hour Day"
+            nws.Range("R1") = "Weighted Time Difference (Working Days)"
+            nws.Range("S1") = "Number of Days"
+            nws.Range("T1") = "Number of Hours"
+            nws.Range("U1") = "Calc1"
+            nws.Range("V1") = "Calc2"
+            nws.Range("W1") = "Calc3"
+            nws.Range("X1") = "Final E2E Duration"
+            
+            
+  
+ End Sub
+ 
+Private Sub CopyData()
+    
+On Error GoTo ErrorHandler
+'    Dim wscount As Worksheet
+'    For Each wscount In ThisWorkbook.Worksheets
+'    wscount.Activate
+    
+    Dim WS_Count As Integer
+    Dim i As Integer
+    
+    WS_Count = ActiveWorkbook.Worksheets.Count
+    
+    For i = 7 To WS_Count - 1
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Worksheets(i).Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Combined Reports").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Combined Reports"), 1)
+    
+    Worksheets(i).Range("A1", "A" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       ' rngNewRange.Interior.Color = vbYellow
+    
+    Worksheets(i).Range("B1", "B" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("B" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("C1", "C" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("C" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("D1", "D" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("D" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+          
+    Worksheets(i).Range("E1", "E" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("E" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("F1", "F" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("F" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("G1", "G" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("G" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+       
+    Worksheets(i).Range("H1", "H" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("H" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+    
+    Worksheets(i).Range("I1", "I" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("I" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+        
+    Worksheets(i).Range("J1", "J" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("J" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+        
+    Worksheets(i).Range("K1", "K" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("K" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+        
+    Worksheets(i).Range("L1", "L" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("L" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+        
+    Worksheets(i).Range("M1", "M" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("M" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+    
+    Worksheets(i).Range("N1", "N" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("N" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("O1", "O" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("O" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("P1", "P" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("P" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("Q1", "Q" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("Q" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("R1", "R" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("R" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("S1", "S" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("S" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("T1", "T" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("T" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("U1", "U" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("U" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("V1", "V" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("V" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("W1", "W" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("W" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Worksheets(i).Range("X1", "X" & LastRow).Copy
+    Worksheets("Combined Reports").Paste Destination:=Sheets("Combined Reports").Range("X" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Combined Reports").Range(Sheets("Combined Reports").Cells(LastOldDataRow + 1, 1), Sheets("Combined Reports").Cells(LR(Sheets("Combined Reports"), 1), 1))
+
+    Next
+ErrorHandler:
+ErrorOccurred = True
+
+End Sub
+
+
+
+Private Sub DeleteTemporarySheets()
+
+    
+Dim ws As Worksheet
+Set ws = ThisWorkbook.Worksheets("Combined Reports")
+
+Dim index As Integer
+Dim WS2 As Worksheet
+Dim i As Integer
+index = ws.index
+
+
+ 
+ For i = index To 1 Step -1
+    Set WS2 = ThisWorkbook.Worksheets(index - 1)
+    Debug.Print WS2.Name
+    If WS2.Name = "Data" Or WS2.Name = "Combined Reports" Or WS2.Name = "Sheet1" Or WS2.Name = "Total Before Sort" Or WS2.Name = "Step Completed" Or WS2.Name = "Approved" Or WS2.Name = "Total After Sort" Then
+        Else
+            Application.DisplayAlerts = False
+            WS2.Delete
+            Application.DisplayAlerts = True
+            index = index - 1
+    End If
+Next
+
+Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+
+End Sub
+
+
+Private Sub DeleteRowsWithEmptyColumnCellsAndRedundantCells()
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Combined Reports")
+                    
+    Dim rng As Range
+    
+    ws.Range("A1:X1").Offset(1, 0).AutoFilter Field:=1, Criteria1:="Expense Report Number"
+        Set rng = ws.Range("A2:A" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    
+    
+    
+    ws.Range("A1:X1").AutoFilter Field:=3, Criteria1:="="
+         Set rng = ws.Range("C2:C" & Range("A" & Rows.Count).End(xlUp).Row)
+    rng.SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    ws.ShowAllData
+    
+
+End Sub
+
+Private Sub DeleteAllCancelledExpenses()
+
+Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Combined Reports")
+    
+    Dim rng As Range
+    Dim i As Long
+    
+    Dim LastRow As Long
+    LastRow = ws.Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+
+    Set rng = ws.Range("F:F")
+    With rng
+        ' Loop through all cells of the range
+        ' Loop backwards, hence the "Step -1"
+        For i = LastRow To 1 Step -1
+            If .Item(i) = "Canceled" Then
+                ' Since cell is empty, delete the whole row
+                .Item(i).EntireRow.Delete
+            End If
+        Next i
+    End With
+    
+End Sub
+
+
+
+Private Sub CreatePivots()
+
+'Declare Variables
+Dim PSheet As Worksheet
+Dim DSheet As Worksheet
+Dim PCache As PivotCache
+Dim PTable As PivotTable
+Dim PRange As Range
+Dim LastRow As Long
+Dim LastCol As Long
+
+'Insert a New Blank Worksheet
+Application.DisplayAlerts = False
+On Error Resume Next
+Worksheets("Pivot Tables").Delete
+Application.DisplayAlerts = True
+
+Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Pivot Tables"
+
+Set PSheet = ThisWorkbook.Worksheets("Pivot Tables")
+Set DSheet = ThisWorkbook.Worksheets("Combined Reports")
+
+'Define Data Range
+LastRow = DSheet.Cells(Rows.Count, 1).End(xlUp).Row
+LastCol = DSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+Set PRange = DSheet.Cells(1, 1).Resize(LastRow, LastCol)
+
+'Define Pivot Cache
+Set PCache = ThisWorkbook.PivotCaches.Create _
+(SourceType:=xlDatabase, SourceData:=PRange). _
+CreatePivotTable(TableDestination:=PSheet.Cells(2, 2), _
+TableName:="E2EPivot")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 1), TableName:="E2EPivot")
+
+'Insert Row Fields
+With PSheet.PivotTables("E2EPivot").PivotFields("Expense Items on Expense Report")
+.Orientation = xlRowField
+.Position = 1
+End With
+
+'Insert Data Field
+With PSheet.PivotTables("E2EPivot").PivotFields("Original Time Difference")
+.Orientation = xlDataField
+.Position = 1
+.Function = xlAverage
+.Name = "Average Time Difference"
+End With
+
+End Sub
+
+Private Sub EnterFormulasInPivotTablesSheet()
+
+Dim ws As Worksheet
+Dim rng As Range
+Dim LastRow As Long
+
+    Set ws = ThisWorkbook.Worksheets("Pivot Tables")
+    ws.Range("D2") = "Average Time Difference (In Text)"
+    
+    LastRow = Sheets("Pivot Tables").Cells(Rows.Count, "B").End(xlUp).Row
+
+    ws.Range("D2") = "Total Days"
+        Set rng = ws.Range("D3:D" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-1],"","",REPT("" "",LEN(RC[-1]))),(1-1)*LEN(RC[-1])+1,LEN(RC[-1])))"
+    
+    ws.Range("E2") = "Provisional Total Hours"
+        Set rng = ws.Range("E3:E" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-2],"","",REPT("" "",LEN(RC[-2]))),(2-1)*LEN(RC[-2])+1,LEN(RC[-2])))"
+            
+    ws.Range("F2") = "Funny Calc 1"
+        Set rng = ws.Range("F3:F" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",0 & "","" & RC[-1])"
+        
+    ws.Range("G2") = "Funny Calc 2"
+        Set rng = ws.Range("G3:G" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-1]*9)"
+    
+    ws.Range("H2") = "Total Hours"
+        Set rng = ws.Range("H3:H" & LastRow)
+            rng.Formula = "=LEFT(RC[-1],1)"
+            
+    ws.Range("I2") = "Actual Total Duration"
+        Set rng = ws.Range("I3:I" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-5] & "" Days "" & RC[-1] & "" Hours"")"
+
+    Set rng = ws.Range("D2:I2")
+    rng.Style = "Input"
+    Set rng = ws.Range("D3:I" & LastRow)
+    rng.Style = "Good"
+    
+    ws.Range("C" & LastRow).Copy
+    ws.Range("D" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("E" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("F" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("G" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("H" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("I" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+        
+End Sub
+
+Private Sub CreatePivotsWORKINGDAYS()
+
+'Declare Variables
+Dim PSheet As Worksheet
+Dim DSheet As Worksheet
+Dim PCache As PivotCache
+Dim PTable As PivotTable
+Dim PRange As Range
+Dim LastRow As Long
+Dim LastCol As Long
+
+'Insert a New Blank Worksheet
+Application.DisplayAlerts = False
+On Error Resume Next
+Worksheets("Pivot Tables WORKINGDAYS").Delete
+Application.DisplayAlerts = True
+
+Worksheets.Add(After:=Worksheets(Worksheets.Count)).Name = "Pivot Tables WORKINGDAYS"
+
+Set PSheet = ThisWorkbook.Worksheets("Pivot Tables WORKINGDAYS")
+Set DSheet = ThisWorkbook.Worksheets("Combined Reports")
+
+'Define Data Range
+LastRow = DSheet.Cells(Rows.Count, 1).End(xlUp).Row
+LastCol = DSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+Set PRange = DSheet.Cells(1, 1).Resize(LastRow, LastCol)
+
+'Define Pivot Cache
+Set PCache = ThisWorkbook.PivotCaches.Create _
+(SourceType:=xlDatabase, SourceData:=PRange). _
+CreatePivotTable(TableDestination:=PSheet.Cells(2, 2), _
+TableName:="E2EPivotWORKINGDAYS")
+
+'Insert Blank Pivot Table
+Set PTable = PCache.CreatePivotTable _
+(TableDestination:=PSheet.Cells(1, 1), TableName:="E2EPivotWORKINGDAYS")
+
+'Insert Row Fields
+With PSheet.PivotTables("E2EPivotWORKINGDAYS").PivotFields("Expense Items on Expense Report")
+.Orientation = xlRowField
+.Position = 1
+End With
+
+'Insert Data Field
+With PSheet.PivotTables("E2EPivotWORKINGDAYS").PivotFields("Original Weighted Time Difference for 9 Hour Day")
+.Orientation = xlDataField
+.Position = 1
+.Function = xlAverage
+.Name = "Average Time Difference WORKINGDAYS"
+End With
+
+End Sub
+
+
+Private Sub EnterFormulasInPivotTablesWORKINGDAYSSheet()
+
+Dim ws As Worksheet
+Dim rng As Range
+Dim LastRow As Long
+
+    Set ws = ThisWorkbook.Worksheets("Pivot Tables WORKINGDAYS")
+
+
+    LastRow = Sheets("Pivot Tables WORKINGDAYS").Cells(Rows.Count, "B").End(xlUp).Row
+'
+'    Set rng = ws.Range("D3:D" & LastRow)
+'    rng.Formula = "=IF(RC[-1]="""",0,TRUNC(RC[-1])& "" Days "" & HOUR(RC[-1])& "" Hours"" &"" "" & MINUTE(RC[-1])& "" Minutes "" & SECOND(RC[-1])& "" Seconds"")"
+'    rng.Style = "Good"
+    ws.Range("D2") = "Working Days"
+        Set rng = ws.Range("D3:D" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-1],"","",REPT("" "",LEN(RC[-1]))),(1-1)*LEN(RC[-1])+1,LEN(RC[-1])))"
+    
+    ws.Range("E2") = "Provisional Working Hours"
+        Set rng = ws.Range("E3:E" & LastRow)
+            rng.Formula = "=TRIM(MID(SUBSTITUTE(RC[-2],"","",REPT("" "",LEN(RC[-2]))),(2-1)*LEN(RC[-2])+1,LEN(RC[-2])))"
+            
+    ws.Range("F2") = "Funny Calc 1"
+        Set rng = ws.Range("F3:F" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",0 & "","" & RC[-1])"
+        
+    ws.Range("G2") = "Funny Calc 2"
+        Set rng = ws.Range("G3:G" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-1]*9)"
+    
+    ws.Range("H2") = "Working Hours"
+        Set rng = ws.Range("H3:H" & LastRow)
+            rng.Formula = "=LEFT(RC[-1],1)"
+            
+    ws.Range("I2") = "Actual Working Duration"
+        Set rng = ws.Range("I3:I" & LastRow)
+            rng.Formula = "=IF(RC[-1]="""","""",RC[-5] & "" Days "" & RC[-1] & "" Hours"")"
+
+    Set rng = ws.Range("D2:I2")
+    rng.Style = "Input"
+    Set rng = ws.Range("D3:I" & LastRow)
+    rng.Style = "Good"
+    
+    ws.Range("C" & LastRow).Copy
+    ws.Range("D" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("E" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("F" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("G" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("H" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    ws.Range("I" & LastRow).PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    
+End Sub
+
+Private Sub DeleteUselessness()
+
+Application.DisplayAlerts = False
+
+On Error Resume Next
+ThisWorkbook.Worksheets("Total Before Sort").Delete
+ThisWorkbook.Worksheets("Step Completed").Delete
+ThisWorkbook.Worksheets("Approved").Delete
+ThisWorkbook.Worksheets("Total After Sort").Delete
+ThisWorkbook.Worksheets("Data").Delete
+
+Application.DisplayAlerts = True
+
+End Sub
+
+

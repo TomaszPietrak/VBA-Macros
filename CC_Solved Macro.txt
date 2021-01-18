@@ -1,0 +1,1456 @@
+Attribute VB_Name = "CopyMacro"
+Option Explicit
+
+Private ErrorOccurred As Boolean
+
+
+'F2 Pay MACROS START HERE
+
+
+Private Sub RemoveFillF2PayFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F2 PAY Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub F2PayDrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("F2 PAY")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("F2 Pay Pivot")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "F2 Contact Center" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 EDM" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 Benefits" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 Mobility" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 EE Relations" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 Expenses" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 Learning" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                ElseIf c.PivotCell.RowItems(1).Name = "F2 Perf Management" And c.PivotCell.RowItems(2).Name = "Pay" Then
+                        c.ShowDetail = True
+                    Call F2PayCopyData
+                    Call F2PayDeletePageMacro
+                    
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+Private Sub F2PayCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F2 Pay")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "Timeliness Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("F2 Pay Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("F2 Pay Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("F2 PAY Feedback").Paste Destination:=Sheets("F2 PAY Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("F2 Pay Feedback").Range(Sheets("F2 Pay Feedback").Cells(LastOldDataRow + 1, 1), Sheets("F2 Pay Feedback").Cells(LR(Sheets("F2 Pay Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("F2 PAY Feedback").Paste Destination:=Sheets("F2 PAY Feedback").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("S2", "S" & LastRow).Copy
+    Worksheets("F2 PAY Feedback").Paste Destination:=Sheets("F2 PAY Feedback").Range("C" & LastRow2).Offset(1, 0)
+
+    WS2.Range("T2", "T" & LastRow).Copy
+    Worksheets("F2 PAY Feedback").Paste Destination:=Sheets("F2 PAY Feedback").Range("D" & LastRow2).Offset(1, 0)
+
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("F2 PAY Feedback").Paste Destination:=Sheets("F2 PAY Feedback").Range("E" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+    
+Private Sub F2PayDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("F2 PAY")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+'    If WS2.Name <> Left("Sheet", 5) Then
+'    ErrorOccurred = True
+'    GoTo ErrorHandler
+'    End if
+
+    If WS2.Name = "Timeliness Feedback" Then
+    GoTo ErrorHandler
+    End If
+
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub F2PayFinalMacro()
+    
+    Call RemoveFillF2PayFeedbackTable
+    
+    Call F2PayDrillDown2Levels
+    
+    End Sub
+
+'No CC Agents Feedback MACROS START HERE
+
+Private Sub RemoveNoCCAgentsTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("no CC agents feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub NoCCAgentsDrillDown()
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+
+Set ws = ThisWorkbook.Worksheets("no CC agents")
+Set pt = ws.PivotTables("NoCCagentsPivots")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+ErrorHandler:
+    ErrorOccurred = True
+
+    End Sub
+    
+    
+Private Sub NoCCAgentsData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("no CC agents")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "F2 PAY Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("no CC agents feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("no CC agents feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("no CC agents feedback").Paste Destination:=Sheets("no CC agents feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("no CC agents feedback").Range(Sheets("no CC agents feedback").Cells(LastOldDataRow + 1, 1), Sheets("no CC agents feedback").Cells(LR(Sheets("no CC agents feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+        
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("no CC agents feedback").Paste Destination:=Sheets("no CC agents feedback").Range("B" & LastRow2).Offset(1, 0)
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub NoCCAgentsDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("no CC agents")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "F2 PAY Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Sub NoCCAgentsFinalMacro()
+    
+    Call RemoveNoCCAgentsTable
+    
+    Call NoCCAgentsDrillDown
+    
+    Call NoCCAgentsData
+    
+    Call NoCCAgentsDeletePageMacro
+    
+    End Sub
+
+'GDPR Feedback MACROS START HERE
+
+Private Sub RemoveGDPRTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("GDPR feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub GDPRDrillDown()
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+
+Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+Set pt = ws.PivotTables("GDPR_Pivot")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+ErrorHandler:
+    ErrorOccurred = True
+
+    End Sub
+    
+    
+Private Sub GDPRData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("GDPR Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("GDPR Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("GDPR Feedback").Range(Sheets("GDPR Feedback").Cells(LastOldDataRow + 1, 1), Sheets("GDPR Feedback").Cells(LR(Sheets("GDPR Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+        
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("B" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("S2", "S" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("C" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("T2", "T" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("D" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BX2", "BX" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("E" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("GDPR Feedback").Paste Destination:=Sheets("GDPR Feedback").Range("F" & LastRow2).Offset(1, 0)
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub GDPRDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Sub GDPRFinalMacro()
+    
+    Call RemoveGDPRTable
+    
+    Call GDPRDrillDown
+    
+    Call GDPRData
+    
+    Call GDPRDeletePageMacro
+    
+    End Sub
+
+
+'No NL Country Feedback MACROS START HERE
+
+
+Private Sub RemoveFillNoCountryNLFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("OC-No NL country Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub NoCountryNLDrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("NoNLCountry")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "Other" Then
+                        c.ShowDetail = True
+                            Call NoCountryNLCopyData
+                            Call NoCountryNLDeletePageMacro
+                            
+                ElseIf c.PivotCell.RowItems(1).Name = "UNITED STATES" Then
+                        c.ShowDetail = True
+                            Call NoCountryNLCopyData
+                            Call NoCountryNLDeletePageMacro
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+
+
+Private Sub NoCountryNLCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("OC-No NL country Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("OC-No NL country Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("OC-No NL country Feedback").Paste Destination:=Sheets("OC-No NL country Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("OC-No NL country Feedback").Range(Sheets("OC-No NL country Feedback").Cells(LastOldDataRow + 1, 1), Sheets("OC-No NL country Feedback").Cells(LR(Sheets("OC-No NL country Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("OC-No NL country Feedback").Paste Destination:=Sheets("OC-No NL country Feedback").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("I2", "I" & LastRow).Copy
+    Worksheets("OC-No NL country Feedback").Paste Destination:=Sheets("OC-No NL country Feedback").Range("C" & LastRow2).Offset(1, 0)
+
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("OC-No NL country Feedback").Paste Destination:=Sheets("OC-No NL country Feedback").Range("D" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub NoCountryNLDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub NoCountryNLFinalMacro()
+    
+    Call RemoveFillNoCountryNLFeedbackTable
+    
+    Call NoCountryNLDrillDown2Levels
+    
+
+    End Sub
+
+'Case work required Feedback MACROS START HERE
+
+Private Sub RemoveFillCaseFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("OC-Case work required Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub CaseDrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("CaseWorkRequired")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "Case work required" Then
+                        c.ShowDetail = True
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+
+
+Private Sub CaseCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("OC-Case work required Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("OC-Case work required Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("OC-Case work required Feedback").Range(Sheets("OC-Case work required Feedback").Cells(LastOldDataRow + 1, 1), Sheets("OC-Case work required Feedback").Cells(LR(Sheets("OC-Case work required Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("S2", "S" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("C" & LastRow2).Offset(1, 0)
+     
+    WS2.Range("T2", "T" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("D" & LastRow2).Offset(1, 0)
+
+    WS2.Range("U2", "U" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("E" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BX2", "BX" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("F" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("OC-Case work required Feedback").Paste Destination:=Sheets("OC-Case work required Feedback").Range("G" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CaseDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CaseFinalMacro()
+    
+    Call RemoveFillCaseFeedbackTable
+    
+    Call CaseDrillDown2Levels
+    
+    Call CaseCopyData
+    
+    Call CaseDeletePageMacro
+    
+    End Sub
+
+'BO Request Feedback MACROS START HERE
+
+Private Sub RemoveFillBOFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("OC-BO Request Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub BODrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("BOClosed")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "BO Request" Then
+                        c.ShowDetail = True
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+
+
+Private Sub BOCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("OC-BO Request Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("OC-BO Request Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("OC-BO Request Feedback").Paste Destination:=Sheets("OC-BO Request Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("OC-BO Request Feedback").Range(Sheets("OC-BO Request Feedback").Cells(LastOldDataRow + 1, 1), Sheets("OC-BO Request Feedback").Cells(LR(Sheets("OC-BO Request Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("OC-BO Request Feedback").Paste Destination:=Sheets("OC-BO Request Feedback").Range("B" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BX2", "BX" & LastRow).Copy
+    Worksheets("OC-BO Request Feedback").Paste Destination:=Sheets("OC-BO Request Feedback").Range("C" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("OC-BO Request Feedback").Paste Destination:=Sheets("OC-BO Request Feedback").Range("D" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub BODeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Other checks yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Other checks" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub BOFinalMacro()
+    
+    Call RemoveFillBOFeedbackTable
+    
+    Call BODrillDown2Levels
+    
+    Call BOCopyData
+    
+    Call BODeletePageMacro
+    
+    End Sub
+
+
+'CRC Feedback MACROS START HERE
+
+Private Sub RemoveFillCRCFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("CRC Yesterday Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub CRCDrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("CRC yesterday")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("CRCRequired")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "Valid" And c.PivotCell.RowItems(2).Name = "csrc_service_failure" Then
+                        c.ShowDetail = True
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+
+
+Private Sub CRCCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("CRC yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "CRC" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("CRC Yesterday Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("CRC Yesterday Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("CRC Yesterday Feedback").Paste Destination:=Sheets("CRC Yesterday Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("CRC Yesterday Feedback").Range(Sheets("CRC Yesterday Feedback").Cells(LastOldDataRow + 1, 1), Sheets("CRC Yesterday Feedback").Cells(LR(Sheets("CRC Yesterday Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("CRC Yesterday Feedback").Paste Destination:=Sheets("CRC Yesterday Feedback").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("S2", "S" & LastRow).Copy
+    Worksheets("CRC Yesterday Feedback").Paste Destination:=Sheets("CRC Yesterday Feedback").Range("C" & LastRow2).Offset(1, 0)
+     
+    WS2.Range("T2", "T" & LastRow).Copy
+    Worksheets("CRC Yesterday Feedback").Paste Destination:=Sheets("CRC Yesterday Feedback").Range("D" & LastRow2).Offset(1, 0)
+
+    WS2.Range("U2", "U" & LastRow).Copy
+    Worksheets("CRC Yesterday Feedback").Paste Destination:=Sheets("CRC Yesterday Feedback").Range("E" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CRCDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("CRC yesterday")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "CRC" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CRCFinalMacro()
+    
+    Call RemoveFillCRCFeedbackTable
+    
+    Call CRCDrillDown2Levels
+    
+    Call CRCCopyData
+    
+    Call CRCDeletePageMacro
+    
+    End Sub
+    
+    'Outcome Feedback MACROS START HERE
+
+Private Sub RemoveFillOutcomeFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Outcome Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub OutcomeDrillDown2Levels()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("Outcome")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("OutcomeYesterday")
+        
+        Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_directed_3rd_party" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_opened_system_ticket" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_performed_transaction" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_provided_status" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_directed_self_service" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_directed_other_provider" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_assign_specialist" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "co_provided_ee_specific_data" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                    
+                    ElseIf c.PivotCell.RowItems(1).Name = "Case work not required" And c.PivotCell.RowItems(2).Name = "(blank)" Then
+                        c.ShowDetail = True
+                        Call OutcomeCopyData
+                        Call OutcomeDeletePageMacro
+                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_directed_3rd_party" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_documentation_only" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_provided_general_information" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                     ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_opened_system_ticket" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                     ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_performed_transaction" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                     ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_provided_ee_specific_data" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_provided_status" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_unable_authenticate" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                                        
+                                    ElseIf c.PivotCell.RowItems(1).Name = "Case work required" And c.PivotCell.RowItems(2).Name = "co_directed_hr_manager" Then
+                                        c.ShowDetail = True
+                                        Call OutcomeCopyData
+                                        Call OutcomeDeletePageMacro
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+
+
+Private Sub OutcomeCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Outcome")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+    
+    If WS2.Name = "Survey" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Outcome Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Outcome Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("Outcome Feedback").Paste Destination:=Sheets("Outcome Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Outcome Feedback").Range(Sheets("Outcome Feedback").Cells(LastOldDataRow + 1, 1), Sheets("Outcome Feedback").Cells(LR(Sheets("Outcome Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("Outcome Feedback").Paste Destination:=Sheets("Outcome Feedback").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("AK2", "AK" & LastRow).Copy
+    Worksheets("Outcome Feedback").Paste Destination:=Sheets("Outcome Feedback").Range("C" & LastRow2).Offset(1, 0)
+     
+    WS2.Range("AN2", "AN" & LastRow).Copy
+    Worksheets("Outcome Feedback").Paste Destination:=Sheets("Outcome Feedback").Range("D" & LastRow2).Offset(1, 0)
+
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub OutcomeDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Outcome")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Survey" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub OutcomeFinalMacro()
+    
+    Call RemoveFillOutcomeFeedbackTable
+    
+    Call OutcomeDrillDown2Levels
+    
+    End Sub
+    
+    
+'Reopen Feedback MACROS START HERE
+
+Private Sub RemoveFillReopenFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Reopen Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+Private Sub ReopenFeedbackDrillDown()
+
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+Set ws = ThisWorkbook.Worksheets("Reopen")
+Set pt = ws.PivotTables("ReopenYesterday")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+End Sub
+
+ Private Sub ReopenCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Reopen")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "Outcome Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Reopen Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Reopen Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Reopen Feedback").Range(Sheets("Reopen Feedback").Cells(LastOldDataRow + 1, 1), Sheets("Reopen Feedback").Cells(LR(Sheets("Reopen Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+        
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("B" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("S2", "S" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("C" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("T2", "T" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("D" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BX2", "BX" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("E" & LastRow2).Offset(1, 0)
+    
+    WS2.Range("BZ2", "BZ" & LastRow).Copy
+    Worksheets("Reopen Feedback").Paste Destination:=Sheets("Reopen Feedback").Range("F" & LastRow2).Offset(1, 0)
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub ReopenDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Reopen")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Outcome Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub ReopenFinalMacro()
+    
+    Call RemoveFillReopenFeedbackTable
+    
+    Call ReopenFeedbackDrillDown
+    
+    Call ReopenCopyData
+    
+    Call ReopenDeletePageMacro
+    
+    End Sub
+
+'Coaching OP Feedback MACROS START HERE
+
+Private Sub RemoveFillCoachingOpFeedbackTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Coaching Op. Feedback")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+
+    
+Private Sub CoachingOpDrillDown()
+    
+        Dim ws As Worksheet
+        Dim index As Integer
+        Set ws = ThisWorkbook.Worksheets("Coaching Op.")
+    
+        Dim pt As PivotTable
+        Set pt = ws.PivotTables("CoachingOpPivotYesterday")
+        
+       Dim rngData As Range
+        Set rngData = pt.DataBodyRange
+        
+        Dim c As Range
+        For Each c In rngData.Rows
+            If c.PivotCell.RowItems.Count = pt.RowFields.Count Then
+                If c.PivotCell.RowItems(1).Name = "cop_t3" Then
+                        c.ShowDetail = True
+                End If
+            End If
+        Next c
+    End Sub
+    
+    
+Private Sub CoachinOpCopyData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("Coaching Op.")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "Reopen Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Coaching Op. Feedback").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Coaching Op. Feedback"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("Coaching Op. Feedback").Paste Destination:=Sheets("Coaching Op. Feedback").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Coaching Op. Feedback").Range(Sheets("Coaching Op. Feedback").Cells(LastOldDataRow + 1, 1), Sheets("Coaching Op. Feedback").Cells(LR(Sheets("Coaching Op. Feedback"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CoachingOpDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("Coaching Op.")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "Reopen Feedback" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+Private Sub CoachingOPFinalMacro()
+    
+    Call RemoveFillCoachingOpFeedbackTable
+    
+    Call CoachingOpDrillDown
+    
+    Call CoachinOpCopyData
+    
+    Call CoachingOpDeletePageMacro
+    
+    End Sub
+Public Sub FinalProduct()
+    
+    Application.ScreenUpdating = False
+    
+    Call F2PayFinalMacro
+    
+    Call NoCCAgentsFinalMacro
+    
+    Call GDPRFinalMacro
+    
+    Call NoCountryNLFinalMacro
+    
+    Call CaseFinalMacro
+    
+    Call BOFinalMacro
+    
+    Call CRCFinalMacro
+    
+    Call OutcomeFinalMacro
+    
+    Call CoachingOPFinalMacro
+    
+    Call ReopenFinalMacro
+    
+    Application.ScreenUpdating = True
+
+End Sub

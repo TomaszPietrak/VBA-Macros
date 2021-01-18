@@ -1,0 +1,214 @@
+Attribute VB_Name = "DispatchingAid"
+Option Explicit
+Private ErrorOccurred As Boolean
+
+Private Sub CreateChasing()
+'if it is there, then do the formula, else don't
+ 
+    Dim ws As Worksheet
+        With ThisWorkbook
+            Set ws = .Worksheets("SLA Breach - ACTION NEEDED")
+        Dim index As Integer
+        Dim WS2 As Worksheet
+            index = ws.index - 1
+            Set WS2 = ThisWorkbook.Worksheets(index)
+            
+        If WS2.Name = "Chasing" Then
+            GoTo ErrorHandler
+        Else
+            Set ws = .Sheets.Add(Before:=.Sheets("SLA Breach - ACTION NEEDED"))
+            ws.Name = "Chasing"
+        End If
+    End With
+Exit Sub
+
+
+ErrorHandler:
+        ErrorOccurred = True
+            Application.DisplayAlerts = False
+                ThisWorkbook.Sheets("Chasing").Delete
+            Application.DisplayAlerts = True
+        With ThisWorkbook
+            Set ws = .Sheets.Add(Before:=.Sheets("SLA Breach - ACTION NEEDED"))
+            ws.Name = "Chasing"
+        End With
+
+End Sub
+
+Private Sub Headers()
+
+On Error GoTo ErrorHandler
+Dim ws As Worksheet
+
+Set ws = ThisWorkbook.Worksheets("Chasing")
+    With ws
+    .Range("A1").Value = "Ticket Number"
+    .Range("B1").Value = "Group"
+    .Range("C1").Value = "Assignee"
+    .Range("D1").Value = "Name"
+    .Range("E1").Value = "Bucket Day"
+    .Range("A1:E1").Font.Bold = True
+    .Range("A1:E1").Interior.Color = RGB(70, 104, 198)
+    .Range("A1:E1").Font.Color = RGB(255, 255, 255)
+    .Range("A1:E1").AutoFilter
+    .AutoFilter.Sort.SortFields.Add Key:= _
+        Range("E1"), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:= _
+        xlSortNormal
+    End With
+    
+    With ws.AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+ErrorHandler:
+        ErrorOccurred = True
+    
+End Sub
+
+
+
+Private Sub FifteenDaySubtotal()
+
+Dim d As Variant
+Dim ws As Worksheet
+
+Set ws = ThisWorkbook.Sheets("SLA Breach - ACTION NEEDED")
+        ws.Select
+With ws.PivotTables("SLAPivot")
+        d = .GetPivotData("id", "Sla results", "SLA miss").Address
+        Range(d).ShowDetail = True
+End With
+
+End Sub
+
+Private Sub FiveDaySubtotal()
+
+Dim d As Variant
+Dim ws As Worksheet
+
+Set ws = ThisWorkbook.Sheets("SLA Breach - ACTION NEEDED")
+        ws.Select
+With ws.PivotTables("SLAPivot")
+        d = .GetPivotData("id", "Sla results", "take action").Address
+        Range(d).ShowDetail = True
+End With
+
+End Sub
+
+Private Sub CopyData()
+
+ Dim ws As Worksheet
+        With ThisWorkbook
+            Set ws = .Worksheets("SLA Breach - ACTION NEEDED")
+        Dim index As Integer
+        Dim WS2 As Worksheet
+            index = ws.index - 1
+            Set WS2 = ThisWorkbook.Worksheets(index)
+            
+        If WS2.Name = "Chasing" Then
+            GoTo ErrorHandler
+        End If
+        
+        End With
+Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("Chasing").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("Chasing"), 1)
+    
+    WS2.Range("A2", "A" & LastRow).Copy
+    Worksheets("Chasing").Paste Destination:=Sheets("Chasing").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("Chasing").Range(Sheets("Chasing").Cells(LastOldDataRow + 1, 1), Sheets("Chasing").Cells(LR(Sheets("Chasing"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+    
+    WS2.Range("E2", "E" & LastRow).Copy
+    Worksheets("Chasing").Paste Destination:=Sheets("Chasing").Range("B" & LastRow2).Offset(1, 0)
+
+    WS2.Range("L2", "L" & LastRow).Copy
+    Worksheets("Chasing").Paste Destination:=Sheets("Chasing").Range("C" & LastRow2).Offset(1, 0)
+
+    WS2.Range("N2", "N" & LastRow).Copy
+    Worksheets("Chasing").Paste Destination:=Sheets("Chasing").Range("D" & LastRow2).Offset(1, 0)
+
+    WS2.Range("AL2", "AL" & LastRow).Copy
+    Worksheets("Chasing").Paste Destination:=Sheets("Chasing").Range("E" & LastRow2).Offset(1, 0)
+    
+    Exit Sub
+
+ErrorHandler:
+    ErrorOccurred = True
+End Sub
+
+
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+
+Private Sub DeleteMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("SLA Breach - ACTION NEEDED")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+
+
+    If WS2.Name = "Chasing" Then
+    GoTo ErrorHandler
+    End If
+
+    
+    Application.DisplayAlerts = False
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+
+Public Sub FullDispathingAid()
+
+Call CreateChasing
+
+Call Headers
+
+Call FiveDaySubtotal
+
+Call CopyData
+
+Call DeleteMacro
+
+Call FifteenDaySubtotal
+
+Call CopyData
+
+Call DeleteMacro
+
+End Sub
+

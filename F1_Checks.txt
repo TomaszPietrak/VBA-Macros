@@ -1,0 +1,267 @@
+Attribute VB_Name = "F1_Checks"
+Option Explicit
+
+Private ErrorOccurred As Boolean
+
+Private Function LR(xSh As Worksheet, xCol As Long) As Long 'last row
+    With xSh
+        LR = .Cells(.Rows.Count, xCol).End(xlUp).Row
+    End With
+End Function
+
+'F1 + Public Reply + Doc Only MACROS START HERE, let's call it F1PR
+
+Private Sub RemoveFillF1PRTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F1 + PR + Doc Only")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+   
+ Private Sub F1PRDrillDown()
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+
+Set ws = ThisWorkbook.Worksheets("F1 Checks")
+Set pt = ws.PivotTables("F1PR")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+ErrorHandler:
+    ErrorOccurred = True
+
+    End Sub
+    
+    
+    Private Sub F1PRData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F1 Checks")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "F1 Checks" _
+    Or WS2.Name = "F1 + PR + Doc Only" _
+    Or WS2.Name = "F1 + No PR + No Doc Only}" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("F1 + PR + Doc Only").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("F1 + PR + Doc Only"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("F1 + PR + Doc Only").Paste Destination:=Sheets("F1 + PR + Doc Only").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("F1 + PR + Doc Only").Range(Sheets("F1 + PR + Doc Only").Cells(LastOldDataRow + 1, 1), Sheets("F1 + PR + Doc Only").Cells(LR(Sheets("F1 + PR + Doc Only"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+        
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("F1 + PR + Doc Only").Paste Destination:=Sheets("F1 + PR + Doc Only").Range("B" & LastRow2).Offset(1, 0)
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+    Private Sub F1PRDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("F1 Checks")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "F1 Checks" _
+    Or WS2.Name = "F1 + PR + Doc Only" _
+    Or WS2.Name = "F1 + No PR + No Doc Only}" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Sub F1PRFinalMacro()
+    
+    Call RemoveFillF1PRTable
+    
+    Call F1PRDrillDown
+    
+    Call F1PRData
+    
+    Call F1PRDeletePageMacro
+    
+    End Sub
+
+'F1 + No Public Reply + No Doc Only MACROS START HERE, let's call it F1NPR
+
+Private Sub RemoveFillF1NPRTable()
+
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F1 + No PR + No Doc Only")
+        ws.Columns(1).Interior.ColorIndex = 0
+    
+End Sub
+   
+ Private Sub F1NPRDrillDown()
+ On Error GoTo ErrorHandler
+    
+Dim ws As Worksheet
+Dim rng As Range
+Dim pt As PivotTable
+
+
+Set ws = ThisWorkbook.Worksheets("F1 Checks")
+Set pt = ws.PivotTables("F1NPR")
+Set rng = pt.RowRange
+rng.Cells(rng.Cells.Count).End(xlToRight).ShowDetail = True
+
+ErrorHandler:
+    ErrorOccurred = True
+
+    End Sub
+    
+    
+    Private Sub F1NPRData()
+    On Error GoTo ErrorHandler
+    
+    Dim ws As Worksheet
+        Set ws = ThisWorkbook.Worksheets("F1 Checks")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+        index = ws.index - 1
+        Set WS2 = ThisWorkbook.Worksheets(index)
+        
+    If WS2.Name = "F1 Checks" _
+    Or WS2.Name = "F1 + PR + Doc Only" _
+    Or WS2.Name = "F1 + No PR + No Doc Only}" Then
+        GoTo ErrorHandler
+    End If
+    
+    Dim myrng As Range
+    Dim LastRow As Long
+    LastRow = Cells.Find(What:="*", _
+                    After:=Range("A1"), _
+                    LookAt:=xlPart, _
+                    LookIn:=xlFormulas, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlPrevious, _
+                    MatchCase:=False).Row
+    
+    Dim LastRow2 As Long
+    LastRow2 = Sheets("F1 + No PR + No Doc Only").Cells(Rows.Count, "A").End(xlUp).Row
+    
+    Dim LastOldDataRow As Long
+    Dim rngNewRange As Range
+
+    LastOldDataRow = LR(Sheets("F1 + PR + Doc Only"), 1)
+    
+    WS2.Range("C2", "C" & LastRow).Copy
+    Worksheets("F1 + PR + Doc Only").Paste Destination:=Sheets("F1 + No PR + No Doc Only").Range("A" & LastRow2).Offset(1, 0)
+        Set rngNewRange = Sheets("F1 + No PR + No Doc Only").Range(Sheets("F1 + No PR + No Doc Only").Cells(LastOldDataRow + 1, 1), Sheets("F1 + No PR + No Doc Only").Cells(LR(Sheets("F1 + No PR + No Doc Only"), 1), 1))
+        rngNewRange.Interior.Color = vbYellow
+        
+    WS2.Range("D2", "D" & LastRow).Copy
+    Worksheets("F1 + No PR + No Doc Only").Paste Destination:=Sheets("F1 + No PR + No Doc Only").Range("B" & LastRow2).Offset(1, 0)
+
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+    
+    Private Sub F1NPRDeletePageMacro()
+    On Error GoTo ErrorHandler
+
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("F1 Checks")
+    Dim index As Integer
+    Dim WS2 As Worksheet
+    index = ws.index - 1
+     Set WS2 = ThisWorkbook.Worksheets(index)
+    Debug.Print WS2.Name
+    
+    If WS2.Name = "F1 Checks" _
+    Or WS2.Name = "F1 + PR + Doc Only" _
+    Or WS2.Name = "F1 + No PR + No Doc Only}" Then
+        GoTo ErrorHandler
+    End If
+    
+    Application.DisplayAlerts = False
+    
+    'Delete ws2
+    WS2.Delete
+    Application.DisplayAlerts = True
+    
+    Exit Sub
+    
+ErrorHandler:
+    ErrorOccurred = True
+    
+    End Sub
+    
+
+Private Sub F1NPRFinalMacro()
+    
+    
+    Call RemoveFillF1NPRTable
+    
+    Call F1NPRDrillDown
+    
+    Call F1NPRData
+    
+    Call F1NPRDeletePageMacro
+
+    
+    End Sub
+
+
+'Call all macros together
+
+Public Sub F1FinalMacro()
+    
+    Application.ScreenUpdating = False
+    
+    Call F1PRFinalMacro
+    
+    Call F1NPRFinalMacro
+    
+    Application.ScreenUpdating = True
+    
+    End Sub
